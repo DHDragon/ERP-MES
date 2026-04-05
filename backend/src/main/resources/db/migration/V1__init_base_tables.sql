@@ -1,0 +1,184 @@
+-- ERP 基础表初始化（第一包：项目基础骨架 + 通用能力层）
+-- 注意：字段命名/注释后续需与《ERP数据库表设计说明_在线版》对齐。
+
+CREATE TABLE IF NOT EXISTS sys_org (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_code VARCHAR(64) NOT NULL COMMENT '组织编码',
+  org_name VARCHAR(128) NOT NULL COMMENT '组织名称',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_org_code(org_code)
+) COMMENT='组织';
+
+CREATE TABLE IF NOT EXISTS sys_dept (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  dept_code VARCHAR(64) NOT NULL COMMENT '部门编码',
+  dept_name VARCHAR(128) NOT NULL COMMENT '部门名称',
+  parent_id BIGINT NULL COMMENT '上级部门ID',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_dept_code(org_id, dept_code),
+  KEY idx_sys_dept_org(org_id)
+) COMMENT='部门';
+
+CREATE TABLE IF NOT EXISTS sys_user (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  dept_id BIGINT NULL COMMENT '部门ID',
+  username VARCHAR(64) NOT NULL COMMENT '用户名',
+  password_hash VARCHAR(128) NOT NULL COMMENT '密码哈希',
+  real_name VARCHAR(64) NULL COMMENT '姓名',
+  mobile VARCHAR(32) NULL COMMENT '手机号',
+  email VARCHAR(128) NULL COMMENT '邮箱',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_user_username(org_id, username),
+  KEY idx_sys_user_org(org_id),
+  KEY idx_sys_user_dept(dept_id)
+) COMMENT='用户';
+
+CREATE TABLE IF NOT EXISTS sys_role (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  role_code VARCHAR(64) NOT NULL COMMENT '角色编码',
+  role_name VARCHAR(128) NOT NULL COMMENT '角色名称',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_role_code(org_id, role_code),
+  KEY idx_sys_role_org(org_id)
+) COMMENT='角色';
+
+CREATE TABLE IF NOT EXISTS sys_menu (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  parent_id BIGINT NULL COMMENT '父级菜单ID',
+  menu_code VARCHAR(64) NOT NULL COMMENT '菜单编码',
+  menu_name VARCHAR(128) NOT NULL COMMENT '菜单名称',
+  path VARCHAR(255) NULL COMMENT '路由路径',
+  component VARCHAR(255) NULL COMMENT '前端组件',
+  icon VARCHAR(64) NULL COMMENT '图标',
+  sort_no INT NOT NULL DEFAULT 0 COMMENT '排序',
+  menu_type VARCHAR(16) NOT NULL DEFAULT 'MENU' COMMENT '类型 MENU/BUTTON',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_menu_code(org_id, menu_code),
+  KEY idx_sys_menu_org(org_id),
+  KEY idx_sys_menu_parent(parent_id)
+) COMMENT='菜单';
+
+CREATE TABLE IF NOT EXISTS sys_role_menu (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  role_id BIGINT NOT NULL COMMENT '角色ID',
+  menu_id BIGINT NOT NULL COMMENT '菜单ID',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_role_menu(org_id, role_id, menu_id),
+  KEY idx_sys_role_menu_role(role_id),
+  KEY idx_sys_role_menu_menu(menu_id)
+) COMMENT='角色菜单';
+
+CREATE TABLE IF NOT EXISTS sys_user_role (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  user_id BIGINT NOT NULL COMMENT '用户ID',
+  role_id BIGINT NOT NULL COMMENT '角色ID',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_user_role(org_id, user_id, role_id),
+  KEY idx_sys_user_role_user(user_id),
+  KEY idx_sys_user_role_role(role_id)
+) COMMENT='用户角色';
+
+CREATE TABLE IF NOT EXISTS sys_dict (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  dict_code VARCHAR(64) NOT NULL COMMENT '字典编码',
+  dict_name VARCHAR(128) NOT NULL COMMENT '字典名称',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_dict(org_id, dict_code)
+) COMMENT='字典';
+
+CREATE TABLE IF NOT EXISTS sys_dict_item (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  dict_id BIGINT NOT NULL COMMENT '字典ID',
+  item_code VARCHAR(64) NOT NULL COMMENT '条目编码',
+  item_name VARCHAR(128) NOT NULL COMMENT '条目名称',
+  sort_no INT NOT NULL DEFAULT 0 COMMENT '排序',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_dict_item(org_id, dict_id, item_code),
+  KEY idx_sys_dict_item_dict(dict_id)
+) COMMENT='字典条目';
+
+CREATE TABLE IF NOT EXISTS sys_param (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  param_code VARCHAR(64) NOT NULL COMMENT '参数编码',
+  param_name VARCHAR(128) NOT NULL COMMENT '参数名称',
+  param_value VARCHAR(512) NOT NULL COMMENT '参数值',
+  status VARCHAR(16) NOT NULL DEFAULT 'ENABLED' COMMENT '启用状态',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  UNIQUE KEY uq_sys_param(org_id, param_code)
+) COMMENT='系统参数';
