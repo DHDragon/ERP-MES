@@ -14,3 +14,7 @@ backend/logs
 # env
 *.log
 *.tmp
+
+# ts artifacts
+frontend/src/**/*.js
+frontend/**/*.tsbuildinfo
