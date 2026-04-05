@@ -182,3 +182,25 @@ CREATE TABLE IF NOT EXISTS sys_param (
 
   UNIQUE KEY uq_sys_param(org_id, param_code)
 ) COMMENT='系统参数';
+
+CREATE TABLE IF NOT EXISTS sys_op_log (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+  org_id BIGINT NOT NULL COMMENT '组织ID',
+  username VARCHAR(64) NULL COMMENT '操作人账号',
+  uri VARCHAR(255) NULL COMMENT '请求URI',
+  http_method VARCHAR(16) NULL COMMENT 'HTTP方法',
+  class_method VARCHAR(255) NULL COMMENT '类方法',
+  cost_ms BIGINT NOT NULL DEFAULT 0 COMMENT '耗时ms',
+  success TINYINT NOT NULL DEFAULT 1 COMMENT '是否成功 1是0否',
+  error_msg VARCHAR(1024) NULL COMMENT '错误信息',
+
+  created_by BIGINT NOT NULL DEFAULT 0 COMMENT '创建人',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_by BIGINT NOT NULL DEFAULT 0 COMMENT '更新人',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  del_flag TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记 0否1是',
+
+  KEY idx_sys_op_log_org(org_id),
+  KEY idx_sys_op_log_uri(uri),
+  KEY idx_sys_op_log_created_at(created_at)
+) COMMENT='操作日志';
