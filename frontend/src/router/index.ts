@@ -4,6 +4,7 @@ import MainLayout from '../layout/MainLayout.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/login', component: () => import('../views/LoginView.vue'), meta: { title: '登录', public: true } },
     {
       path: '/',
       component: MainLayout,
@@ -14,6 +15,15 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const isPublic = Boolean(to.meta.public)
+  const token = localStorage.getItem('erp_token')
+  if (!isPublic && !token) {
+    return '/login'
+  }
+  return true
 })
 
 export default router

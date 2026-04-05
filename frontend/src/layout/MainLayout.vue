@@ -2,15 +2,24 @@
   <div class="layout-root">
     <header class="topbar">
       <div class="logo">ERP-MES</div>
-      <div class="right">当前用户：{{ userStore.username }}</div>
+      <div class="right">
+        <span style="margin-right:12px">当前用户：{{ userStore.username }}</span>
+        <el-button size="small" @click="logout">退出</el-button>
+      </div>
     </header>
 
     <div class="layout-body">
       <aside class="sidebar">
         <el-menu :default-active="activePath" router>
-          <el-menu-item index="/">首页</el-menu-item>
-          <el-menu-item index="/base/users">用户管理</el-menu-item>
-          <el-menu-item index="/base/menus">菜单管理</el-menu-item>
+          <template v-for="m in renderMenus" :key="m.key">
+            <el-sub-menu v-if="m.children && m.children.length" :index="m.key">
+              <template #title>{{ m.title }}</template>
+              <el-menu-item v-for="c in m.children" :key="c.key" :index="c.path || c.key">
+                {{ c.title }}
+              </el-menu-item>
+            </el-sub-menu>
+            <el-menu-item v-else :index="m.path || m.key">{{ m.title }}</el-menu-item>
+          </template>
         </el-menu>
       </aside>
 
@@ -35,15 +44,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTabsStore } from '../stores/tabs'
 import { useUserStore } from '../stores/user'
+import { useMenuStore } from '../stores/menu'
 
 const route = useRoute()
 const router = useRouter()
 const tabsStore = useTabsStore()
 const userStore = useUserStore()
+const menuStore = useMenuStore()
 
 const activePath = computed(() => route.path)
 
@@ -57,6 +68,60 @@ watch(
 )
 
 const go = (path: string) => router.push(path)
+
+const logout = async () => {
+  userStore.logout()
+  await router.replace('/login')
+}
+
+onMounted(async () => {
+  try {
+    await menuStore.loadMenus()
+  } catch (e) {
+    // 后端菜单接口未就绪/无DB时，前端可降级为静态菜单
+  }
+})
+
+type RenderMenu = { key: string; title: string; path?: string; parentId?: number | null; children?: RenderMenu[] }
+
+const renderMenus = computed<RenderMenu[]>(() => {
+  if (!menuStore.menus.length) {
+    return [
+      { key: '/', title: '首页', path: '/' },
+      { key: '/base/users', title: '用户管理', path: '/base/users' },
+      { key: '/base/menus', title: '菜单管理', path: '/base/menus' },
+    ]
+  }
+
+  const list = menuStore.menus
+    .filter((m) => m.menuType === 'MENU')
+    .map((m) => ({
+      key: String(m.id),
+      title: m.menuName,
+      path: m.path || undefined,
+      parentId: (m.parentId ?? null) as any,
+    }))
+
+  const byId = new Map<string, RenderMenu>()
+  list.forEach((i) => byId.set(i.key, i))
+
+  const roots: RenderMenu[] = []
+  list.forEach((i) => {
+    if (!i.parentId) {
+      roots.push(i)
+    } else {
+      const parent = byId.get(String(i.parentId))
+      if (parent) {
+        parent.children = parent.children || []
+        parent.children.push(i)
+      } else {
+        roots.push(i)
+      }
+    }
+  })
+
+  return roots
+})
 </script>
 
 <style scoped>
