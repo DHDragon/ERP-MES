@@ -60,6 +60,26 @@ const router = createRouter({
         { path: '/sales/returns', component: () => import('../views/sales/SalesReturnListView.vue'), meta: { title: '销售退货列表' } },
         { path: '/sales/returns/form', component: () => import('../views/sales/SalesReturnFormView.vue'), meta: { title: '销售退货新增' } },
         { path: '/sales/returns/form/:id', component: () => import('../views/sales/SalesReturnFormView.vue'), meta: { title: '销售退货编辑' } },
+
+        { path: '/purchase/reqs', component: () => import('../views/purchase/PurchaseReqListView.vue'), meta: { title: '采购申请列表' } },
+        { path: '/purchase/reqs/form', component: () => import('../views/purchase/PurchaseReqFormView.vue'), meta: { title: '采购申请新增' } },
+        { path: '/purchase/reqs/form/:id', component: () => import('../views/purchase/PurchaseReqFormView.vue'), meta: { title: '采购申请编辑' } },
+        { path: '/purchase/reqs/detail/:id', component: () => import('../views/purchase/PurchaseReqDetailView.vue'), meta: { title: '采购申请详情' } },
+
+        { path: '/purchase/orders', component: () => import('../views/purchase/PurchaseOrderListView.vue'), meta: { title: '采购订单列表' } },
+        { path: '/purchase/orders/form', component: () => import('../views/purchase/PurchaseOrderFormView.vue'), meta: { title: '采购订单新增' } },
+        { path: '/purchase/orders/form/:id', component: () => import('../views/purchase/PurchaseOrderFormView.vue'), meta: { title: '采购订单编辑' } },
+        { path: '/purchase/orders/detail/:id', component: () => import('../views/purchase/PurchaseOrderDetailView.vue'), meta: { title: '采购订单详情' } },
+
+        { path: '/purchase/receipts', component: () => import('../views/purchase/PurchaseReceiptListView.vue'), meta: { title: '收货列表' } },
+        { path: '/purchase/receipts/detail/:id', component: () => import('../views/purchase/PurchaseReceiptDetailView.vue'), meta: { title: '收货详情' } },
+
+        { path: '/purchase/inbounds', component: () => import('../views/purchase/PurchaseInboundListView.vue'), meta: { title: '采购入库列表' } },
+        { path: '/purchase/inbounds/detail/:id', component: () => import('../views/purchase/PurchaseInboundDetailView.vue'), meta: { title: '采购入库详情' } },
+
+        { path: '/purchase/returns', component: () => import('../views/purchase/PurchaseReturnListView.vue'), meta: { title: '采购退货列表' } },
+        { path: '/purchase/returns/form', component: () => import('../views/purchase/PurchaseReturnFormView.vue'), meta: { title: '采购退货新增' } },
+        { path: '/purchase/returns/form/:id', component: () => import('../views/purchase/PurchaseReturnFormView.vue'), meta: { title: '采购退货编辑' } },
       ],
     },
   ],

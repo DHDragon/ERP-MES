@@ -121,6 +121,17 @@ const fallbackMenus: RenderMenu[] = [
     ],
   },
   {
+    key: 'purchase',
+    title: '采购主链路',
+    children: [
+      { key: '/purchase/reqs', title: '采购申请', path: '/purchase/reqs' },
+      { key: '/purchase/orders', title: '采购订单', path: '/purchase/orders' },
+      { key: '/purchase/receipts', title: '收货管理', path: '/purchase/receipts' },
+      { key: '/purchase/inbounds', title: '采购入库', path: '/purchase/inbounds' },
+      { key: '/purchase/returns', title: '采购退货', path: '/purchase/returns' },
+    ],
+  },
+  {
     key: 'mine',
     title: '我的',
     children: [
