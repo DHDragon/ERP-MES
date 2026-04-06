@@ -77,21 +77,51 @@ const logout = async () => {
 onMounted(async () => {
   try {
     await menuStore.loadMenus()
-  } catch (e) {
-    // 后端菜单接口未就绪/无DB时，前端可降级为静态菜单
+  } catch {
+    // 忽略加载失败，走静态降级菜单
   }
 })
 
 type RenderMenu = { key: string; title: string; path?: string; parentId?: number | null; children?: RenderMenu[] }
 
-const renderMenus = computed<RenderMenu[]>(() => {
-  if (!menuStore.menus.length) {
-    return [
-      { key: '/', title: '首页', path: '/' },
+const fallbackMenus: RenderMenu[] = [
+  { key: '/', title: '首页', path: '/' },
+  {
+    key: 'base',
+    title: '基础数据',
+    children: [
       { key: '/base/users', title: '用户管理', path: '/base/users' },
+      { key: '/base/roles', title: '角色管理', path: '/base/roles' },
       { key: '/base/menus', title: '菜单管理', path: '/base/menus' },
-    ]
-  }
+      { key: '/base/dicts', title: '字典管理', path: '/base/dicts' },
+      { key: '/base/params', title: '参数中心', path: '/base/params' },
+      { key: '/base/data-scope', title: '数据权限', path: '/base/data-scope' },
+    ],
+  },
+  {
+    key: 'masterdata',
+    title: '主数据中心',
+    children: [
+      { key: '/masterdata/materials', title: '物料管理', path: '/masterdata/materials' },
+      { key: '/masterdata/material-categories', title: '物料分类', path: '/masterdata/material-categories' },
+      { key: '/masterdata/customers', title: '客户管理', path: '/masterdata/customers' },
+      { key: '/masterdata/suppliers', title: '供应商管理', path: '/masterdata/suppliers' },
+      { key: '/masterdata/warehouses', title: '仓库管理', path: '/masterdata/warehouses' },
+      { key: '/masterdata/locations', title: '库位管理', path: '/masterdata/locations' },
+    ],
+  },
+  {
+    key: 'mine',
+    title: '我的',
+    children: [
+      { key: '/profile', title: '个人信息', path: '/profile' },
+      { key: '/auth/permissions', title: '我的权限点', path: '/auth/permissions' },
+    ],
+  },
+]
+
+const renderMenus = computed<RenderMenu[]>(() => {
+  if (!menuStore.menus.length) return fallbackMenus
 
   const list = menuStore.menus
     .filter((m) => m.menuType === 'MENU')
@@ -120,7 +150,27 @@ const renderMenus = computed<RenderMenu[]>(() => {
     }
   })
 
-  return roots
+  const hasPath = (menus: RenderMenu[], path: string): boolean =>
+    menus.some((m) => m.path === path || (m.children ? hasPath(m.children, path) : false))
+
+  const merged = [...roots]
+  for (const top of fallbackMenus) {
+    if (!top.children?.length) {
+      if (top.path && !hasPath(merged, top.path)) merged.push(top)
+      continue
+    }
+    const existTop = merged.find((m) => m.title === top.title)
+    if (!existTop) {
+      merged.push(top)
+      continue
+    }
+    existTop.children = existTop.children || []
+    for (const c of top.children) {
+      if (c.path && !hasPath([existTop], c.path)) existTop.children.push(c)
+    }
+  }
+
+  return merged.length ? merged : fallbackMenus
 })
 </script>
 
