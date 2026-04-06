@@ -111,6 +111,16 @@ const fallbackMenus: RenderMenu[] = [
     ],
   },
   {
+    key: 'sales',
+    title: '销售主链路',
+    children: [
+      { key: '/sales/orders', title: '销售订单', path: '/sales/orders' },
+      { key: '/sales/delivery-notices', title: '发货通知', path: '/sales/delivery-notices' },
+      { key: '/sales/outbounds', title: '销售出库', path: '/sales/outbounds' },
+      { key: '/sales/returns', title: '销售退货', path: '/sales/returns' },
+    ],
+  },
+  {
     key: 'mine',
     title: '我的',
     children: [

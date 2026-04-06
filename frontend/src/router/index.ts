@@ -43,6 +43,23 @@ const router = createRouter({
         { path: '/masterdata/locations', component: () => import('../views/masterdata/LocationListView.vue'), meta: { title: '库位列表' } },
         { path: '/masterdata/locations/form', component: () => import('../views/masterdata/LocationFormView.vue'), meta: { title: '库位新增' } },
         { path: '/masterdata/locations/form/:id', component: () => import('../views/masterdata/LocationFormView.vue'), meta: { title: '库位编辑' } },
+
+        { path: '/sales/orders', component: () => import('../views/sales/SalesOrderListView.vue'), meta: { title: '销售订单列表' } },
+        { path: '/sales/orders/form', component: () => import('../views/sales/SalesOrderFormView.vue'), meta: { title: '销售订单新增' } },
+        { path: '/sales/orders/form/:id', component: () => import('../views/sales/SalesOrderFormView.vue'), meta: { title: '销售订单编辑' } },
+        { path: '/sales/orders/detail/:id', component: () => import('../views/sales/SalesOrderDetailView.vue'), meta: { title: '销售订单详情' } },
+
+        { path: '/sales/delivery-notices', component: () => import('../views/sales/DeliveryNoticeListView.vue'), meta: { title: '发货通知列表' } },
+        { path: '/sales/delivery-notices/form', component: () => import('../views/sales/DeliveryNoticeFormView.vue'), meta: { title: '发货通知新增' } },
+        { path: '/sales/delivery-notices/form/:id', component: () => import('../views/sales/DeliveryNoticeFormView.vue'), meta: { title: '发货通知编辑' } },
+        { path: '/sales/delivery-notices/detail/:id', component: () => import('../views/sales/DeliveryNoticeDetailView.vue'), meta: { title: '发货通知详情' } },
+
+        { path: '/sales/outbounds', component: () => import('../views/sales/SalesOutboundListView.vue'), meta: { title: '销售出库列表' } },
+        { path: '/sales/outbounds/detail/:id', component: () => import('../views/sales/SalesOutboundDetailView.vue'), meta: { title: '销售出库详情' } },
+
+        { path: '/sales/returns', component: () => import('../views/sales/SalesReturnListView.vue'), meta: { title: '销售退货列表' } },
+        { path: '/sales/returns/form', component: () => import('../views/sales/SalesReturnFormView.vue'), meta: { title: '销售退货新增' } },
+        { path: '/sales/returns/form/:id', component: () => import('../views/sales/SalesReturnFormView.vue'), meta: { title: '销售退货编辑' } },
       ],
     },
   ],
