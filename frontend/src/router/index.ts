@@ -80,6 +80,13 @@ const router = createRouter({
         { path: '/purchase/returns', component: () => import('../views/purchase/PurchaseReturnListView.vue'), meta: { title: '采购退货列表' } },
         { path: '/purchase/returns/form', component: () => import('../views/purchase/PurchaseReturnFormView.vue'), meta: { title: '采购退货新增' } },
         { path: '/purchase/returns/form/:id', component: () => import('../views/purchase/PurchaseReturnFormView.vue'), meta: { title: '采购退货编辑' } },
+
+        { path: '/inventory/stock', component: () => import('../views/inventory/StockQueryView.vue'), meta: { title: '即时库存' } },
+        { path: '/inventory/ledger', component: () => import('../views/inventory/LedgerQueryView.vue'), meta: { title: '库存台账' } },
+        { path: '/inventory/transfers', component: () => import('../views/inventory/TransferListView.vue'), meta: { title: '调拨单列表' } },
+        { path: '/inventory/transfers/detail/:id', component: () => import('../views/inventory/TransferDetailView.vue'), meta: { title: '调拨单详情' } },
+        { path: '/inventory/counts', component: () => import('../views/inventory/CountListView.vue'), meta: { title: '盘点单列表' } },
+        { path: '/inventory/counts/detail/:id', component: () => import('../views/inventory/CountDetailView.vue'), meta: { title: '盘点单详情' } },
       ],
     },
   ],

@@ -88,6 +88,9 @@ public class SalesController {
     @PostMapping("/outbounds/{id}/audit")
     public Result<BizSalesOutboundH> outboundAudit(@PathVariable Long id) { return Result.ok(service.auditSalesOutbound(id)); }
 
+    @PostMapping("/outbounds/{id}/unaudit")
+    public Result<BizSalesOutboundH> outboundUnAudit(@PathVariable Long id) { return Result.ok(service.unAuditSalesOutbound(id)); }
+
     @GetMapping("/outbounds/{id}/pda-records")
     public Result<String> outboundPda(@PathVariable Long id) { return Result.ok(service.pdaRecords(id)); }
 

@@ -518,9 +518,78 @@ public class PurchaseService {
         h.setInspectionHookStatus(h.getQcRequired() == 1 ? "PASSED" : "BYPASS");
         inboundHMapper.updateById(h);
 
-        // 入库审核后写库存台账（占位）
+        // 入库审核后写库存台账
         inventoryInboundStubService.writeLedgerForPurchaseInbound(h.getId());
 
+        return h;
+    }
+
+    @Transactional
+    public BizPurchaseInboundH unAuditInbound(Long id) {
+        BizPurchaseInboundH h = mustInbound(id);
+        if (!"APPROVED".equals(h.getStatus())) throw new BizException(400, "仅已审核入库单可反审核");
+
+        List<BizPurchaseInboundD> inLines = inboundDMapper.selectList(new QueryWrapper<BizPurchaseInboundD>()
+                .eq("org_id", ORG_ID).eq("inbound_id", id).eq("del_flag", 0));
+
+        Map<Long, BigDecimal> receiptDelta = new HashMap<>();
+        Map<Long, BigDecimal> orderDelta = new HashMap<>();
+        for (BizPurchaseInboundD inLine : inLines) {
+            receiptDelta.merge(inLine.getReceiptLineId(), safe(inLine.getInboundQty()), BigDecimal::add);
+            BizPurchaseReceiptD rl = receiptDMapper.selectById(inLine.getReceiptLineId());
+            if (rl != null && rl.getOrderLineId() != null) {
+                orderDelta.merge(rl.getOrderLineId(), safe(inLine.getInboundQty()), BigDecimal::add);
+            }
+        }
+
+        // 先回滚库存与台账
+        inventoryInboundStubService.rollbackForPurchaseInbound(h.getId());
+
+        // 回写收货行
+        for (Map.Entry<Long, BigDecimal> e : receiptDelta.entrySet()) {
+            BizPurchaseReceiptD rl = receiptDMapper.selectById(e.getKey());
+            if (rl == null || rl.getDelFlag() != 0) continue;
+            BigDecimal next = safe(rl.getInboundQty()).subtract(e.getValue());
+            if (next.compareTo(BigDecimal.ZERO) < 0) next = BigDecimal.ZERO;
+            rl.setInboundQty(next);
+            rl.setStatus(next.compareTo(BigDecimal.ZERO) == 0 ? "OPEN" : (next.compareTo(safe(rl.getReceiptQty())) >= 0 ? "DONE" : "PARTIAL"));
+            receiptDMapper.updateById(rl);
+        }
+
+        // 回写订单行
+        for (Map.Entry<Long, BigDecimal> e : orderDelta.entrySet()) {
+            BizPurchaseOrderD ol = orderDMapper.selectById(e.getKey());
+            if (ol == null || ol.getDelFlag() != 0) continue;
+            BigDecimal next = safe(ol.getInboundQty()).subtract(e.getValue());
+            if (next.compareTo(BigDecimal.ZERO) < 0) next = BigDecimal.ZERO;
+            ol.setInboundQty(next);
+            ol.setStatus(next.compareTo(BigDecimal.ZERO) == 0 ? "OPEN" : (next.compareTo(safe(ol.getOrderQty())) >= 0 ? "DONE" : "PARTIAL"));
+            orderDMapper.updateById(ol);
+        }
+
+        // 回写收货头
+        BizPurchaseReceiptH rh = mustReceipt(h.getReceiptId());
+        List<BizPurchaseReceiptD> rhLines = receiptDMapper.selectList(new QueryWrapper<BizPurchaseReceiptD>()
+                .eq("org_id", ORG_ID).eq("receipt_id", rh.getId()).eq("del_flag", 0));
+        BigDecimal receiptInbound = rhLines.stream().map(x -> safe(x.getInboundQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal receiptTotal = rhLines.stream().map(x -> safe(x.getReceiptQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        rh.setInboundQty(receiptInbound);
+        rh.setStatus(receiptInbound.compareTo(BigDecimal.ZERO) == 0 ? "CONFIRMED" : (receiptInbound.compareTo(receiptTotal) >= 0 ? "DONE" : "PARTIAL"));
+        receiptHMapper.updateById(rh);
+
+        // 回写订单头
+        BizPurchaseOrderH oh = mustOrder(rh.getOrderId());
+        List<BizPurchaseOrderD> ohLines = orderDMapper.selectList(new QueryWrapper<BizPurchaseOrderD>()
+                .eq("org_id", ORG_ID).eq("order_id", oh.getId()).eq("del_flag", 0));
+        BigDecimal inboundTotal = ohLines.stream().map(x -> safe(x.getInboundQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal orderTotal = ohLines.stream().map(x -> safe(x.getOrderQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        oh.setInboundQty(inboundTotal);
+        oh.setStatus(inboundTotal.compareTo(BigDecimal.ZERO) == 0 ? "APPROVED" : (inboundTotal.compareTo(orderTotal) >= 0 ? "DONE" : "PARTIAL"));
+        orderHMapper.updateById(oh);
+
+        h.setStatus("DRAFT");
+        h.setInspectionHookStatus(h.getQcRequired() == 1 ? "PENDING" : "BYPASS");
+        inboundHMapper.updateById(h);
         return h;
     }
 

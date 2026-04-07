@@ -93,6 +93,9 @@ public class PurchaseController {
     @PostMapping("/inbounds/{id}/audit")
     public Result<BizPurchaseInboundH> inboundAudit(@PathVariable Long id, @RequestBody PurchaseDtos.AuditReq req) { return Result.ok(service.auditInbound(id, req)); }
 
+    @PostMapping("/inbounds/{id}/unaudit")
+    public Result<BizPurchaseInboundH> inboundUnAudit(@PathVariable Long id) { return Result.ok(service.unAuditInbound(id)); }
+
     // ---------- 采购退货（骨架） ----------
     @GetMapping("/returns")
     public Result<PageResult<BizPurchaseReturnH>> returnList(@RequestParam(defaultValue = "1") Integer pageNo,

@@ -417,9 +417,79 @@ public class SalesService {
         }
         outboundHMapper.updateById(h);
 
-        // 库存扣减占位
+        // 库存扣减
         inventoryStubService.deductForSalesOutbound(h.getId());
 
+        return h;
+    }
+
+    @Transactional
+    public BizSalesOutboundH unAuditSalesOutbound(Long id) {
+        BizSalesOutboundH h = mustOutbound(id);
+        if (!"APPROVED".equals(h.getStatus())) throw new BizException(400, "仅已审核出库单可反审核");
+
+        List<BizSalesOutboundD> outLines = outboundDMapper.selectList(new QueryWrapper<BizSalesOutboundD>()
+                .eq("org_id", ORG_ID).eq("outbound_id", id).eq("del_flag", 0));
+
+        Map<Long, BigDecimal> noticeDelta = new HashMap<>();
+        Map<Long, BigDecimal> orderDelta = new HashMap<>();
+        for (BizSalesOutboundD od : outLines) {
+            noticeDelta.merge(od.getNoticeLineId(), safe(od.getOutboundQty()), BigDecimal::add);
+            BizDeliveryNoticeD nd = noticeDMapper.selectById(od.getNoticeLineId());
+            if (nd != null && nd.getOrderLineId() != null) {
+                orderDelta.merge(nd.getOrderLineId(), safe(od.getOutboundQty()), BigDecimal::add);
+            }
+        }
+
+        // 先回滚库存与台账
+        inventoryStubService.rollbackForSalesOutbound(h.getId());
+
+        // 回写发货通知行
+        for (Map.Entry<Long, BigDecimal> e : noticeDelta.entrySet()) {
+            BizDeliveryNoticeD nd = noticeDMapper.selectById(e.getKey());
+            if (nd == null || nd.getDelFlag() != 0) continue;
+            BigDecimal next = safe(nd.getOutboundQty()).subtract(e.getValue());
+            if (next.compareTo(BigDecimal.ZERO) < 0) next = BigDecimal.ZERO;
+            nd.setOutboundQty(next);
+            nd.setStatus(next.compareTo(BigDecimal.ZERO) == 0 ? "OPEN" : (next.compareTo(safe(nd.getNoticeQty())) >= 0 ? "DONE" : "PARTIAL"));
+            noticeDMapper.updateById(nd);
+        }
+
+        // 回写订单行
+        for (Map.Entry<Long, BigDecimal> e : orderDelta.entrySet()) {
+            BizSalesOrderD ol = orderDMapper.selectById(e.getKey());
+            if (ol == null || ol.getDelFlag() != 0) continue;
+            BigDecimal next = safe(ol.getDeliveredQty()).subtract(e.getValue());
+            if (next.compareTo(BigDecimal.ZERO) < 0) next = BigDecimal.ZERO;
+            ol.setDeliveredQty(next);
+            ol.setStatus(next.compareTo(BigDecimal.ZERO) == 0 ? "OPEN" : (next.compareTo(safe(ol.getOrderQty())) >= 0 ? "DONE" : "PARTIAL"));
+            orderDMapper.updateById(ol);
+        }
+
+        // 回写发货通知头
+        BizDeliveryNoticeH nh = mustNotice(h.getNoticeId());
+        List<BizDeliveryNoticeD> nLines = noticeDMapper.selectList(new QueryWrapper<BizDeliveryNoticeD>()
+                .eq("org_id", ORG_ID).eq("notice_id", nh.getId()).eq("del_flag", 0));
+        BigDecimal noticeOutboundTotal = nLines.stream().map(x -> safe(x.getOutboundQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal noticeTotal = nLines.stream().map(x -> safe(x.getNoticeQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        nh.setOutboundQty(noticeOutboundTotal);
+        nh.setStatus(noticeOutboundTotal.compareTo(BigDecimal.ZERO) == 0 ? "OPEN" : (noticeOutboundTotal.compareTo(noticeTotal) >= 0 ? "DONE" : "PARTIAL"));
+        noticeHMapper.updateById(nh);
+
+        // 回写订单头
+        BizSalesOrderH oh = mustOrder(nh.getOrderId());
+        List<BizSalesOrderD> oLines = orderDMapper.selectList(new QueryWrapper<BizSalesOrderD>()
+                .eq("org_id", ORG_ID).eq("order_id", oh.getId()).eq("del_flag", 0));
+        BigDecimal delivered = oLines.stream().map(x -> safe(x.getDeliveredQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal orderTotal = oLines.stream().map(x -> safe(x.getOrderQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        oh.setDeliveredQty(delivered);
+        if (!"CLOSED".equals(oh.getStatus()) && !"VOID".equals(oh.getStatus())) {
+            oh.setStatus(delivered.compareTo(BigDecimal.ZERO) == 0 ? "APPROVED" : (delivered.compareTo(orderTotal) >= 0 ? "DONE" : "PARTIAL"));
+        }
+        orderHMapper.updateById(oh);
+
+        h.setStatus("DRAFT");
+        outboundHMapper.updateById(h);
         return h;
     }
 
