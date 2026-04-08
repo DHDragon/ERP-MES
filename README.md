@@ -48,6 +48,25 @@ npm run dev
 访问：
 - http://localhost:5173
 
+### 5. 一键开发环境脚本（推荐）
+项目根目录提供了开发脚本，会自动选择可用端口并写入 `.env.local`：
+
+```bash
+# 启动 MySQL/Redis（docker）
+./scripts/dev-up.sh
+
+# 启动后端
+./scripts/dev-backend.sh
+
+# 启动前端
+./scripts/dev-frontend.sh
+```
+
+端口选择脚本：
+```bash
+./scripts/select-ports.sh
+```
+
 ## 说明
 - 当前登录链路为“最小可跑通”演示：账号密码暂未接 DB（待第二步对齐《在线版》字段与表结构后接入）。
 - 所有 Result 结构：`code/message/data/traceId`。

@@ -8,7 +8,7 @@ services:
       MYSQL_DATABASE: erp_dev
       TZ: Asia/Shanghai
     ports:
-      - "13306:3306"
+      - "${MES_MYSQL_PORT:-13306}:3306"
     command:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
@@ -26,7 +26,7 @@ services:
     container_name: erp-redis
     restart: unless-stopped
     ports:
-      - "16379:6379"
+      - "${MES_REDIS_PORT:-16379}:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - erp_redis_data:/data
